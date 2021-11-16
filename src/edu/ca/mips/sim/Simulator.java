@@ -5,6 +5,7 @@ import edu.ca.mips.sim.instructions.Instruction;
 import edu.ca.mips.sim.simulation.Buffer;
 import edu.ca.mips.sim.simulation.Config;
 import edu.ca.mips.sim.simulation.Pipeline;
+import edu.ca.mips.sim.utils.FileUtil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Simulator {
+    final private String resultFilepath = "result/simulation.txt";
+
     List<Instruction> mProgram;
     List<Data> mProgramData;
 
@@ -36,92 +39,98 @@ public class Simulator {
         initialize();
     }
 
-    public void simulate() throws CloneNotSupportedException {
+    public void simulate() throws CloneNotSupportedException, IOException {
         int pc = programStartAddress;
+        PrintWriter out = FileUtil.getPrintWriter(resultFilepath);
+        if (out == null) {
+            return;
+        }
         while (pc != -1) {
             pc = pipeline.runCycle(mProgram, registers, memory, dataStartAddress, pc);
-            printSystemStatus();
+            printSystemStatus(out);
             cycle++;
         }
+        out.close();
     }
 
-    private void printSystemStatus() {
-        System.out.println("--------------------");
-        System.out.println("Cycle:" + cycle);
-        System.out.println();
-        System.out.println("IF Unit:");
-        System.out.print("\tWaiting Instruction:");
+    private void printSystemStatus(PrintWriter out) throws IOException {
+
+        out.println("--------------------");
+        out.println("Cycle:" + cycle);
+        out.println();
+        out.println("IF Unit:");
+        out.print("\tWaiting Instruction:");
         Instruction instruction = pipeline.getIfUnit().getWaitingInstruction();
         if (instruction != null) {
-            System.out.println(" [" + instruction.toString() + "]");
+            out.println(" [" + instruction.toString() + "]");
         } else {
-            System.out.println();
+            out.println();
         }
-        System.out.print("\tExecuted Instruction:");
+        out.print("\tExecuted Instruction:");
         instruction = pipeline.getIfUnit().getExecutedInstruction();
         if (instruction != null) {
-            System.out.println(" [" + instruction.toString() + "]");
+            out.println(" [" + instruction.toString() + "]");
         } else {
-            System.out.println();
+            out.println();
         }
-        System.out.println("Pre-Issue Queue:");
+        out.println("Pre-Issue Queue:");
         Buffer buffer = pipeline.getPreIssueBuffer();
         for (int i = 0; i < Config.MAX_PRE_ISSUE_BUFFER_SIZE; i++) {
-            System.out.print("\tEntry " + i + ":");
+            out.print("\tEntry " + i + ":");
             instruction = buffer.get(i);
             if (instruction != null) {
-                System.out.println(" [" + instruction.toString() + "]");
+                out.println(" [" + instruction.toString() + "]");
             } else {
-                System.out.println();
+                out.println();
             }
         }
-        System.out.println("Pre-ALU1 Queue:");
+        out.println("Pre-ALU1 Queue:");
         buffer = pipeline.getPreALU1Buffer();
         for (int i = 0; i < Config.MAX_PRE_ALU_BUFFER_SIZE; i++) {
-            System.out.print("\tEntry " + i + ":");
+            out.print("\tEntry " + i + ":");
             instruction = buffer.get(i);
             if (instruction != null) {
-                System.out.println(" [" + instruction.toString() + "]");
+                out.println(" [" + instruction.toString() + "]");
             } else {
-                System.out.println();
+                out.println();
             }
         }
-        System.out.print("Pre-MEM Queue:");
+        out.print("Pre-MEM Queue:");
         buffer = pipeline.getPreMemBuffer();
         instruction = buffer.get(0);
         if (instruction != null) {
-            System.out.println(" [" + instruction.toString() + "]");
+            out.println(" [" + instruction.toString() + "]");
         } else {
-            System.out.println();
+            out.println();
         }
-        System.out.print("Post-MEM Queue:");
+        out.print("Post-MEM Queue:");
         buffer = pipeline.getPostMemBuffer();
         instruction = buffer.get(0);
         if (instruction != null) {
-            System.out.println(" [" + instruction.toString() + "]");
+            out.println(" [" + instruction.toString() + "]");
         } else {
-            System.out.println();
+            out.println();
         }
-        System.out.println("Pre-ALU2 Queue:");
+        out.println("Pre-ALU2 Queue:");
         buffer = pipeline.getPreALU2Buffer();
         for (int i = 0; i < Config.MAX_PRE_ALU_BUFFER_SIZE; i++) {
-            System.out.print("\tEntry " + i + ":");
+            out.print("\tEntry " + i + ":");
             instruction = buffer.get(i);
             if (instruction != null) {
-                System.out.println(" [" + instruction.toString() + "]");
+                out.println(" [" + instruction.toString() + "]");
             } else {
-                System.out.println();
+                out.println();
             }
         }
-        System.out.print("Post-ALU2 Queue:");
+        out.print("Post-ALU2 Queue:");
         buffer = pipeline.getPostALU2Buffer();
         instruction = buffer.get(0);
         if (instruction != null) {
-            System.out.println(" [" + instruction.toString() + "]");
+            out.println(" [" + instruction.toString() + "]");
         } else {
-            System.out.println();
+            out.println();
         }
-        printRegisterAndMemory();
+        printRegisterAndMemory(out);
     }
 
     public void initialize() {
@@ -133,31 +142,31 @@ public class Simulator {
         }
     }
 
-    public void printRegisterAndMemory(){
-        System.out.println();
-        System.out.println("Registers");
+    public void printRegisterAndMemory(PrintWriter out){
+        out.println();
+        out.println("Registers");
         for (int i = 0; i < registers.size(); i++) {
             if (i % 8 == 0) {
-                System.out.printf("R%02d:\t", i);
+                out.printf("R%02d:\t", i);
             }
             if (i % 8 == 7) {
-                System.out.print(registers.get(i));
-                System.out.println();
+                out.print(registers.get(i));
+                out.println();
             } else {
-                System.out.print(registers.get(i) + "\t");
+                out.print(registers.get(i) + "\t");
             }
         }
-        System.out.println();
-        System.out.println("Data");
+        out.println();
+        out.println("Data");
         for (int i = 0; i < memory.size(); i++) {
             if (i % 8 == 0) {
-                System.out.printf("%03d:\t", dataStartAddress + i * 4);
+                out.printf("%03d:\t", dataStartAddress + i * 4);
             }
             if (i % 8 == 7) {
-                System.out.print(memory.get(i));
-                System.out.println();
+                out.print(memory.get(i));
+                out.println();
             } else {
-                System.out.print(memory.get(i) + "\t");
+                out.print(memory.get(i) + "\t");
             }
         }
     }
