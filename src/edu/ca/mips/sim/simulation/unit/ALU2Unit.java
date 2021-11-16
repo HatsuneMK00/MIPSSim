@@ -8,11 +8,13 @@ public class ALU2Unit extends FunctionalUnit{
         super("ALU2");
     }
 
-    public void run(Buffer preALU2Buffer, Buffer postALU2Buffer) {
-        Instruction instruction = preALU2Buffer.poll();
+    public void run(Buffer preALU2BufferSnapshot, Buffer preALU2Buffer, Buffer postALU2Buffer) {
+
+        Instruction instruction = preALU2BufferSnapshot.peek();
         if (instruction == null) {
             return;
         }
         postALU2Buffer.add(instruction);
+        preALU2Buffer.poll();
     }
 }

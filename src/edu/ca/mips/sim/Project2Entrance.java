@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class Project2Entrance {
     public static void main(String[] args) {
-        disassemble();
+        simulate();
     }
 
     public static void disassemble() {

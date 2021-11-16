@@ -11,11 +11,12 @@ public class ALU1Unit extends FunctionalUnit{
         super("ALU1");
     }
 
-    public void run(Buffer preALU1Buffer, Buffer preMemBuffer) {
-        Instruction instruction = preALU1Buffer.poll();
+    public void run(Buffer preALU1BufferSnapshot, Buffer preALU1Buffer, Buffer preMemBuffer) {
+        Instruction instruction = preALU1BufferSnapshot.peek();
         if (instruction == null) {
             return;
         }
         preMemBuffer.add(instruction);
+        preALU1Buffer.poll();
     }
 }

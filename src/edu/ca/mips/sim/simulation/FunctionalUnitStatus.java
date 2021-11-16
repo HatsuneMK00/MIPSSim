@@ -4,12 +4,12 @@ import edu.ca.mips.sim.instructions.Instruction;
 import edu.ca.mips.sim.simulation.unit.FunctionalUnit;
 
 public class FunctionalUnitStatus {
-    boolean busy;
+    boolean busy = false;
     Instruction op;
     int fi;
     int fj, fk;
     FunctionalUnit qj, qk;
-    boolean rj, rk;
+    boolean rj = false, rk = false;
 
     public boolean isBusy() {
         return busy;

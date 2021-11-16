@@ -22,24 +22,32 @@ public class Pipeline {
     Scoreboard scoreboard = new Scoreboard();
 
     public Pipeline() {
-        ifUnit = new IFUnit(scoreboard);
+        ifUnit = new IFUnit();
         alu1Unit = new ALU1Unit();
         alu2Unit = new ALU2Unit();
-        issueUnit = new IssueUnit(scoreboard);
+        issueUnit = new IssueUnit();
         memUnit = new MemUnit();
         writeBackUnit = new WriteBackUnit();
     }
 
-    public int runCycle(List<Instruction> program, List<Integer> registers, List<Integer> memory, int dataStartAddress, int pc) {
-        int newPc = ifUnit.run(program, registers, memory, dataStartAddress, preIssueBuffer, pc);
-        if (!ifUnit.isBranchInstruction(program.get((pc - Config.START_PC_VALUE) / 4))) {
-            newPc = ifUnit.run(program, registers, memory, dataStartAddress, preIssueBuffer, newPc);
+    public int runCycle(List<Instruction> program, List<Integer> registers, List<Integer> memory, int dataStartAddress, int pc) throws CloneNotSupportedException {
+        Buffer preIssueBufferSnapshot = (Buffer) preIssueBuffer.clone();
+        Buffer preALU1BufferSnapshot = (Buffer) preALU1Buffer.clone();
+        Buffer preALU2BufferSnapshot = (Buffer) preALU2Buffer.clone();
+        Buffer preMemBufferSnapshot = (Buffer) preMemBuffer.clone();
+        Buffer postMemBufferSnapshot = (Buffer) postMemBuffer.clone();
+        Buffer postALU2BufferSnapshot = (Buffer) postALU2Buffer.clone();
+
+        issueUnit.run(preIssueBufferSnapshot, preIssueBuffer, preALU1Buffer, preALU2Buffer, scoreboard);
+        Scoreboard scoreboardSnapshot = (Scoreboard) scoreboard.clone();
+        writeBackUnit.run(registers, memory, dataStartAddress, postMemBuffer, postALU2Buffer, scoreboard);
+        memUnit.run(registers, memory, dataStartAddress, preMemBufferSnapshot, preMemBuffer, postMemBuffer, scoreboard);
+        alu1Unit.run(preALU1BufferSnapshot, preALU1Buffer, preMemBuffer);
+        alu2Unit.run(preALU2BufferSnapshot, preALU2Buffer, postALU2Buffer);
+        int newPc = ifUnit.run(program, registers, memory, dataStartAddress, preIssueBufferSnapshot, preIssueBuffer, pc, scoreboardSnapshot);
+        if (!ifUnit.isBranchInstruction(program.get((pc - Config.START_PC_VALUE) / 4)) && newPc != -1) {
+            newPc = ifUnit.run(program, registers, memory, dataStartAddress, preIssueBufferSnapshot, preIssueBuffer, newPc, scoreboardSnapshot);
         }
-        issueUnit.run(preIssueBuffer, preALU1Buffer, preALU2Buffer);
-        alu1Unit.run(preALU1Buffer, preMemBuffer);
-        alu2Unit.run(preALU2Buffer, postALU2Buffer);
-        memUnit.run(registers, memory, dataStartAddress, preMemBuffer, postMemBuffer);
-        writeBackUnit.run(registers, memory, dataStartAddress, postMemBuffer, postALU2Buffer);
         return newPc;
     }
 
