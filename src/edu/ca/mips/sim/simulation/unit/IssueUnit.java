@@ -12,7 +12,6 @@ public class IssueUnit extends FunctionalUnit{
     }
 
     public void run(Buffer preIssueBufferSnapshot, Buffer preIssueBuffer, Buffer preALU1Buffer, Buffer preALU2Buffer, Scoreboard scoreboard) throws CloneNotSupportedException {
-//        todo 还没写完 判断条件还需要调整 循环行为需要调整
         Scoreboard scoreboardSnapshot = (Scoreboard) scoreboard.clone();
         for (int i = 0; i < preIssueBufferSnapshot.size; i++) {
             Instruction instruction = preIssueBufferSnapshot.get(i);
