@@ -7,3 +7,5 @@
 ****
 
 本项目为plain JAVA项目，可以直接在IDEA中编译运行
+
+> 项目代码仓库地址: https://github.com/HatsuneMK00/MIPSSim
